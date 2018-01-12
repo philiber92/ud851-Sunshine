@@ -166,9 +166,14 @@ public class SunshineSyncUtils {
                  * If the Cursor was null OR if it was empty, we need to sync immediately to
                  * be able to display data to the user.
                  */
+
+                //remove the condition from below to display the notification immediatly
+
                 if (null == cursor || cursor.getCount() == 0) {
                     startImmediateSync(context);
                 }
+
+                //startImmediateSync(context);
 
                 /* Make sure to close the Cursor to avoid memory leaks! */
                 cursor.close();

@@ -1,15 +1,27 @@
 package com.example.android.sunshine.utilities;
 
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 
+import com.example.android.sunshine.DetailActivity;
 import com.example.android.sunshine.R;
+import com.example.android.sunshine.data.SunshinePreferences;
 import com.example.android.sunshine.data.WeatherContract;
+import com.example.android.sunshine.data.WeatherContract.WeatherEntry;
+
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
+
+import static com.example.android.sunshine.data.WeatherContract.WeatherEntry.*;
 
 public class NotificationUtils {
 
@@ -18,9 +30,9 @@ public class NotificationUtils {
      * the user know there is new weather data available.
      */
     public static final String[] WEATHER_NOTIFICATION_PROJECTION = {
-            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
-            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
-            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
+            COLUMN_WEATHER_ID,
+            COLUMN_MAX_TEMP,
+            COLUMN_MIN_TEMP,
     };
 
     /*
@@ -32,8 +44,9 @@ public class NotificationUtils {
     public static final int INDEX_MAX_TEMP = 1;
     public static final int INDEX_MIN_TEMP = 2;
 
-//  TODO (1) Create a constant int value to identify the notification
+    private static final int NOTIFICATION_ID = 561;
 
+    private static final int NOTIFICATION_REQUEST_CODE = 651;
     /**
      * Constructs and displays a notification for the newly updated weather for today.
      *
@@ -42,8 +55,8 @@ public class NotificationUtils {
     public static void notifyUserOfNewWeather(Context context) {
 
         /* Build the URI for today's weather in order to show up to date data in notification */
-        Uri todaysWeatherUri = WeatherContract.WeatherEntry
-                .buildWeatherUriWithDate(SunshineDateUtils.normalizeDate(System.currentTimeMillis()));
+        Uri todaysWeatherUri =
+                buildWeatherUriWithDate(SunshineDateUtils.normalizeDate(System.currentTimeMillis()));
 
         /*
          * The MAIN_FORECAST_PROJECTION array passed in as the second parameter is defined in our WeatherContract
@@ -83,19 +96,29 @@ public class NotificationUtils {
             int smallArtResourceId = SunshineWeatherUtils
                     .getSmallArtResourceIdForWeatherCondition(weatherId);
 
-//          TODO (2) Use NotificationCompat.Builder to begin building the notification
+            Intent intent = new Intent(context, DetailActivity.class);
+            intent.setData(buildWeatherUriWithDate(
+                    SunshineDateUtils.normalizeDate(System.currentTimeMillis())));
 
-//          TODO (3) Create an Intent with the proper URI to start the DetailActivity
+            PendingIntent pendingIntent = TaskStackBuilder.create(context)
+                    .addNextIntent(intent)
+                    .getPendingIntent(NOTIFICATION_REQUEST_CODE, PendingIntent.FLAG_UPDATE_CURRENT);
 
-//          TODO (4) Use TaskStackBuilder to create the proper PendingIntent
+            Notification notification = new NotificationCompat.Builder(context)
+                    .setPriority(Notification.PRIORITY_HIGH)
+                    .setContentIntent(pendingIntent)
+                    .setContentTitle(notificationTitle)
+                    .setContentText(notificationText)
+                    .setSmallIcon(smallArtResourceId)
+                    .setLargeIcon(largeIcon)
+                    .build();
 
-//          TODO (5) Set the content Intent of the NotificationBuilder
+            NotificationManager manager = (NotificationManager)
+                    context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-//          TODO (6) Get a reference to the NotificationManager
+            manager.notify(NOTIFICATION_ID, notification);
 
-//          TODO (7) Notify the user with the ID WEATHER_NOTIFICATION_ID
-
-//          TODO (8) Save the time at which the notification occurred using SunshinePreferences
+            SunshinePreferences.saveLastNotificationTime(context, System.currentTimeMillis());
         }
 
         /* Always close your cursor when you're done with it to avoid wasting resources. */
